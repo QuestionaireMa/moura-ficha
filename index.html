@@ -121,23 +121,50 @@
   }
   .send[aria-disabled="true"] { opacity: 0.45; }
   .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .chip {
-    font: inherit; font-size: 14.5px; font-weight: 500;
-    color: var(--ink-soft); background: var(--ground);
-    border: 1px solid var(--panel-edge); border-radius: 999px;
-    padding: 9px 13px; cursor: pointer;
+  /* Looks like the dropdowns around it, but holds more than one answer. */
+  .picker {
+    position: relative; font: inherit; font-size: 16px; text-align: left;
+    color: var(--ink); background: var(--ground);
+    border: 1px solid var(--panel-edge); border-radius: 10px;
+    padding: 12px 38px 12px 12px; width: 100%; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .chip[aria-pressed="true"] {
-    color: var(--accent-ink); background: var(--accent);
-    border-color: var(--accent); font-weight: 600;
+  .picker::after {
+    content: ""; position: absolute; right: 15px; top: 50%;
+    width: 8px; height: 8px; margin-top: -6px;
+    border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint);
+    transform: rotate(45deg);
   }
-  .chip[disabled] { opacity: 0.3; }
-  .chipline {
-    width: 100%; margin: 4px 0 -2px;
-    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-faint); font-family: var(--display);
+  .picker[aria-expanded="true"]::after { margin-top: -2px; transform: rotate(225deg); }
+  .picker:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #altLabel { color: var(--ink-faint); }
+  .picker.chosen #altLabel { color: var(--ink); }
+
+  .panel {
+    border: 1px solid var(--panel-edge); border-radius: 10px;
+    background: var(--ground); overflow: hidden;
   }
+  .opt {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    font: inherit; font-size: 15.5px; text-align: left; color: var(--ink);
+    background: none; border: 0; border-top: 1px solid var(--panel-edge);
+    padding: 12px 13px; cursor: pointer;
+  }
+  .opt .box {
+    flex: none; width: 21px; height: 21px; border-radius: 6px;
+    border: 1.5px solid var(--panel-edge); display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; color: transparent;
+  }
+  .opt[aria-checked="true"] .box {
+    background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+  }
+  .opt[disabled] { opacity: 0.35; }
+  .optline {
+    font-family: var(--display); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint);
+    padding: 11px 13px 5px; border-top: 1px solid var(--panel-edge);
+  }
+  .panel > :first-child { border-top: 0; }
   .barnote { font-size: 12.5px; color: var(--ink-faint); text-align: center; margin: 0; }
 
   .done {
@@ -233,8 +260,11 @@
 
       <div class="field">
         <span class="lab">Também podes jogar a</span>
-        <div class="chips" id="alt"></div>
-        <span class="hint">Toca nas que quiseres — podes escolher várias, ou nenhuma.</span>
+        <button type="button" class="picker" id="altBtn" aria-expanded="false">
+          <span id="altLabel">Nenhuma</span>
+        </button>
+        <div class="panel" id="altPanel" hidden></div>
+        <span class="hint">Podes escolher várias, ou nenhuma.</span>
       </div>
 
       <label for="cat">
@@ -295,27 +325,65 @@
     main.appendChild(group);
   });
 
-  // The other positions: one field, as many as he wants, grouped the same
-  // way the dropdown is so the four lines of a team stay recognisable.
-  var alt = document.getElementById('alt');
+  /* The other positions: a dropdown like the ones around it, except that
+     it keeps more than one answer. The four lines of the team head its
+     list, so a boy finds his position where he expects it. */
+  var altBtn = document.getElementById('altBtn');
+  var altPanel = document.getElementById('altPanel');
+  var altLabel = document.getElementById('altLabel');
+
   LINES.forEach(function (line) {
     var head = document.createElement('div');
-    head.className = 'chipline';
+    head.className = 'optline';
     head.textContent = line[0];
-    alt.appendChild(head);
+    altPanel.appendChild(head);
     line[1].forEach(function (pair) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'chip';
-      b.value = pair[0];
-      b.textContent = pair[1];
-      b.setAttribute('aria-pressed', 'false');
-      b.addEventListener('click', function () {
-        b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var o = document.createElement('button');
+      o.type = 'button';
+      o.className = 'opt';
+      o.value = pair[0];
+      o.setAttribute('aria-checked', 'false');
+      o.setAttribute('role', 'checkbox');
+      var box = document.createElement('span');
+      box.className = 'box';
+      box.textContent = '\u2713';
+      var name = document.createElement('span');
+      name.textContent = pair[1];
+      o.appendChild(box);
+      o.appendChild(name);
+      o.addEventListener('click', function () {
+        o.setAttribute('aria-checked', o.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+        describe();
       });
-      alt.appendChild(b);
+      altPanel.appendChild(o);
     });
   });
+
+  function openAlt(yes) {
+    altPanel.hidden = !yes;
+    altBtn.setAttribute('aria-expanded', yes ? 'true' : 'false');
+  }
+
+  altBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    openAlt(altPanel.hidden);
+  });
+  altPanel.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', function () { openAlt(false); });
+
+  /* The closed field has to say what is inside it. Two names fit; beyond
+     that a count reads better than a line he cannot finish. */
+  function describe() {
+    var picked = otherPositions();
+    var names = picked.map(function (code) {
+      // lastChild, not textContent: the tick inside the box is text too.
+      return altPanel.querySelector('.opt[value="' + code + '"]').lastChild.textContent.trim();
+    });
+    altLabel.textContent = names.length === 0 ? 'Nenhuma'
+      : names.length <= 2 ? names.join(', ')
+      : names.length + ' posições';
+    altBtn.classList.toggle('chosen', names.length > 0);
+  }
 
   // Nobody is born tomorrow.
   document.getElementById('dob').max = new Date().toISOString().slice(0, 10);
@@ -324,20 +392,21 @@
 
   function otherPositions() {
     var primary = val('pos');
-    return Array.prototype.filter.call(alt.querySelectorAll('.chip'), function (c) {
-      return c.getAttribute('aria-pressed') === 'true' && c.value !== primary;
-    }).map(function (c) { return c.value; });
+    return Array.prototype.filter.call(altPanel.querySelectorAll('.opt'), function (o) {
+      return o.getAttribute('aria-checked') === 'true' && o.value !== primary;
+    }).map(function (o) { return o.value; });
   }
 
   /* The position he plays most is already named above, so it greys out
      here rather than being offered to him twice. */
   function syncChips() {
     var primary = val('pos');
-    Array.prototype.forEach.call(alt.querySelectorAll('.chip'), function (c) {
-      var same = c.value === primary;
-      c.disabled = same;
-      if (same) { c.setAttribute('aria-pressed', 'false'); }
+    Array.prototype.forEach.call(altPanel.querySelectorAll('.opt'), function (o) {
+      var same = o.value === primary;
+      o.disabled = same;
+      if (same) { o.setAttribute('aria-checked', 'false'); }
     });
+    describe();
   }
 
   function entry() {
