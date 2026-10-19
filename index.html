@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ficha do Jogador — Moura Academy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* One column, stacked blocks, a sticky footer carrying the only action.
+     Committed to the dark look of the app this feeds. */
+
+  /* Border-box, or a full-width input with padding runs past its own panel
+     and clips whatever is typed into it. */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* A display rule of ours outranks the browser's own rule for [hidden],
+     so without this the hidden panels - the confirmation, the "Qual?"
+     field - sit there in plain view from the first paint. */
+  [hidden] { display: none !important; }
+
+  :root {
+    color-scheme: dark;
+    --ground: #0B0D10;
+    --panel: #141920;
+    --panel-edge: #222A34;
+    --ink: #F2F4F7;
+    --ink-soft: #99A2AE;
+    --ink-faint: #6B7585;
+    --accent: #3B9EFF;
+    --accent-ink: #06121F;
+    --pitch: #3DDC84;
+    --warn: #FFB020;
+    --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 34rem;
+    margin-inline: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 150px;
+  }
+
+  header { margin-bottom: 26px; }
+  .crest {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--display); font-size: 15px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  }
+  .crest span { width: 7px; height: 7px; border-radius: 50%; background: var(--pitch); }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.3rem, 11vw, 3.1rem);
+    line-height: 0.95; letter-spacing: -0.01em;
+    text-wrap: balance; margin: 10px 0 8px;
+  }
+  .lede { color: var(--ink-soft); max-width: 36ch; margin: 0; }
+
+  form { display: flex; flex-direction: column; gap: 18px; }
+  fieldset {
+    border: 1px solid var(--panel-edge); background: var(--panel);
+    border-radius: 14px; padding: 16px; margin: 0; min-width: 0;
+    display: flex; flex-direction: column; gap: 15px;
+  }
+  legend {
+    font-family: var(--display); font-size: 13px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-faint); padding-inline: 6px;
+  }
+
+  label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .lab {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  .lab em { font-style: normal; color: var(--warn); }
+  .hint { font-size: 12.5px; color: var(--ink-faint); }
+
+  input, select {
+    font: inherit; font-size: 16px; color: var(--ink);
+    background: var(--ground); border: 1px solid var(--panel-edge);
+    border-radius: 10px; padding: 12px; width: 100%; min-width: 0;
+  }
+  select { appearance: none; -webkit-appearance: none; padding-right: 38px; }
+  .sel { position: relative; display: block; }
+  .sel::after {
+    content: ""; position: absolute; right: 15px; top: 50%;
+    width: 8px; height: 8px; margin-top: -6px; pointer-events: none;
+    border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint);
+    transform: rotate(45deg);
+  }
+  input:focus-visible, select:focus-visible, .send:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .bar {
+    position: fixed; inset: auto 0 0;
+    background: linear-gradient(to top, var(--ground) 72%, rgba(11, 13, 16, 0));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .bar-inner { max-width: 34rem; margin-inline: auto; display: flex; flex-direction: column; gap: 8px; }
+
+  .send {
+    display: block; width: 100%;
+    font: inherit; font-weight: 700; font-size: 17px;
+    color: var(--accent-ink); background: var(--accent);
+    border: 0; border-radius: 12px; padding: 15px;
+    text-align: center; text-decoration: none; cursor: pointer;
+  }
+  .send[aria-disabled="true"] { opacity: 0.45; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    font: inherit; font-size: 14.5px; font-weight: 500;
+    color: var(--ink-soft); background: var(--ground);
+    border: 1px solid var(--panel-edge); border-radius: 999px;
+    padding: 9px 13px; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    color: var(--accent-ink); background: var(--accent);
+    border-color: var(--accent); font-weight: 600;
+  }
+  .chip[disabled] { opacity: 0.3; }
+  .chipline {
+    width: 100%; margin: 4px 0 -2px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-faint); font-family: var(--display);
+  }
+  .barnote { font-size: 12.5px; color: var(--ink-faint); text-align: center; margin: 0; }
+
+  .done {
+    border: 1px solid var(--pitch); background: var(--panel);
+    border-radius: 14px; padding: 22px; margin-bottom: 18px;
+    display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center;
+  }
+  .tick {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--pitch); color: var(--accent-ink);
+    display: grid; place-items: center; font-size: 25px; font-weight: 700;
+  }
+  .done h2 { font-family: var(--display); font-size: 1.7rem; margin: 0; }
+  .done p { margin: 0; color: var(--ink-soft); }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="crest"><span></span>Moura Academy</div>
+    <h1>Ficha do jogador</h1>
+    <p class="lede">Preenche os teus dados e envia. Demora um minuto.</p>
+  </header>
+
+  <div class="done" id="sent" hidden>
+    <div class="tick">&#10003;</div>
+    <h2>Ficha enviada</h2>
+    <p id="sentName"></p>
+    <p>O treinador trata do resto.</p>
+  </div>
+
+  <form id="ficha" novalidate>
+    <fieldset>
+      <legend>Quem és</legend>
+      <label for="first">
+        <span class="lab">Nome próprio <em>*</em></span>
+        <input id="first" autocomplete="given-name" autocapitalize="words" placeholder="Gabriel">
+      </label>
+      <label for="last">
+        <span class="lab">Apelido <em>*</em></span>
+        <input id="last" autocomplete="family-name" autocapitalize="words" placeholder="Nascimento">
+      </label>
+      <label for="known">
+        <span class="lab">Como te chamam</span>
+        <input id="known" autocapitalize="words" placeholder="Gabi">
+        <span class="hint">O nome que ouves no treino. Em branco se for o teu.</span>
+      </label>
+      <label for="dob">
+        <span class="lab">Data de nascimento</span>
+        <input id="dob" type="date" min="1940-01-01">
+      </label>
+      <label for="nat">
+        <span class="lab">Nacionalidade</span>
+        <span class="sel">
+          <select id="nat">
+            <option value="PT">Portugal</option>
+            <option value="BR">Brasil</option>
+            <option value="CV">Cabo Verde</option>
+            <option value="AO">Angola</option>
+            <option value="GW">Guiné-Bissau</option>
+            <option value="ST">São Tomé e Príncipe</option>
+            <option value="MZ">Moçambique</option>
+            <option value="FR">França</option>
+            <option value="ES">Espanha</option>
+            <option value="GB">Reino Unido</option>
+            <option value="US">Estados Unidos</option>
+            <option value="">Outra</option>
+          </select>
+        </span>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Em campo</legend>
+      <label for="foot">
+        <span class="lab">Pé preferido</span>
+        <span class="sel">
+          <select id="foot">
+            <option value="">Escolhe</option>
+            <option value="right">Direito</option>
+            <option value="left">Esquerdo</option>
+            <option value="both">Ambos</option>
+          </select>
+        </span>
+      </label>
+
+      <label for="pos">
+        <span class="lab">Posição principal</span>
+        <span class="sel"><select id="pos" class="positions"></select></span>
+        <span class="hint">Onde jogas quase sempre.</span>
+      </label>
+
+      <div class="field">
+        <span class="lab">Também podes jogar a</span>
+        <div class="chips" id="alt"></div>
+        <span class="hint">Toca nas que quiseres — podes escolher várias, ou nenhuma.</span>
+      </div>
+
+      <label for="cat">
+        <span class="lab">Escalão</span>
+        <span class="sel">
+          <select id="cat">
+            <option value="">Escolhe</option>
+            <option value="U16">Sub-16</option>
+            <option value="U18">Sub-18</option>
+            <option value="U19">Sub-19</option>
+            <option value="OUTRO">Outro</option>
+          </select>
+        </span>
+      </label>
+
+      <label for="squad" id="otherWrap" hidden>
+        <span class="lab">Qual?</span>
+        <input id="squad" autocapitalize="words" placeholder="Sub-15 B">
+      </label>
+    </fieldset>
+  </form>
+</div>
+
+<div class="bar" id="bar">
+  <div class="bar-inner">
+    <button class="send" id="send" type="button" aria-disabled="true">Enviar ao treinador</button>
+    <p class="barnote" id="note">O nome próprio e o apelido chegam. O resto ajuda.</p>
+  </div>
+</div>
+
+<script>
+  // The server that keeps the fichas. The page carries no key: the function
+  // at this address holds the one that writes.
+  var SEND_TO = 'https://kopdyeeszpeszammyoml.supabase.co/functions/v1/ficha';
+
+  // The four lines of a team, in the order a coach reads a sheet.
+  var LINES = [
+    ['Baliza', [['GK', 'Guarda-redes']]],
+    ['Defesa', [['CB', 'Defesa central'], ['LB', 'Lateral esquerdo'], ['RB', 'Lateral direito']]],
+    ['Meio-campo', [['CDM', 'Médio defensivo'], ['CM', 'Médio centro'], ['CAM', 'Médio ofensivo']]],
+    ['Ataque', [['LW', 'Extremo esquerdo'], ['RW', 'Extremo direito'], ['ST', 'Avançado']]]
+  ];
+
+  var main = document.getElementById('pos');
+  var none = document.createElement('option');
+  none.value = '';
+  none.textContent = 'Escolhe uma posição';
+  main.appendChild(none);
+  LINES.forEach(function (line) {
+    var group = document.createElement('optgroup');
+    group.label = line[0];
+    line[1].forEach(function (pair) {
+      var o = document.createElement('option');
+      o.value = pair[0];
+      o.textContent = pair[1];
+      group.appendChild(o);
+    });
+    main.appendChild(group);
+  });
+
+  // The other positions: one field, as many as he wants, grouped the same
+  // way the dropdown is so the four lines of a team stay recognisable.
+  var alt = document.getElementById('alt');
+  LINES.forEach(function (line) {
+    var head = document.createElement('div');
+    head.className = 'chipline';
+    head.textContent = line[0];
+    alt.appendChild(head);
+    line[1].forEach(function (pair) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.value = pair[0];
+      b.textContent = pair[1];
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', function () {
+        b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      });
+      alt.appendChild(b);
+    });
+  });
+
+  // Nobody is born tomorrow.
+  document.getElementById('dob').max = new Date().toISOString().slice(0, 10);
+
+  function val(id) { return (document.getElementById(id).value || '').trim(); }
+
+  function otherPositions() {
+    var primary = val('pos');
+    return Array.prototype.filter.call(alt.querySelectorAll('.chip'), function (c) {
+      return c.getAttribute('aria-pressed') === 'true' && c.value !== primary;
+    }).map(function (c) { return c.value; });
+  }
+
+  /* The position he plays most is already named above, so it greys out
+     here rather than being offered to him twice. */
+  function syncChips() {
+    var primary = val('pos');
+    Array.prototype.forEach.call(alt.querySelectorAll('.chip'), function (c) {
+      var same = c.value === primary;
+      c.disabled = same;
+      if (same) { c.setAttribute('aria-pressed', 'false'); }
+    });
+  }
+
+  function entry() {
+    var cat = val('cat');
+    return {
+      firstName: val('first'),
+      lastName: val('last'),
+      knownAs: val('known'),
+      dateOfBirth: val('dob'),
+      nationalities: val('nat') ? [val('nat')] : [],
+      preferredFoot: val('foot') || null,
+      primaryPosition: val('pos'),
+      secondaryPositions: otherPositions(),
+      squadHint: cat === 'OUTRO' ? val('squad') : cat
+    };
+  }
+
+  var send = document.getElementById('send');
+  var note = document.getElementById('note');
+
+  /* One reference per filled-in form, so a send that lands twice - a
+     double tap, a retry after a dropped connection - is still one boy. */
+  var REF = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+
+  function refresh() {
+    var ready = val('first') && val('last');
+    send.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    document.getElementById('otherWrap').hidden = val('cat') !== 'OUTRO';
+    syncChips();
+    if (ready && note.dataset.warned === 'yes') {
+      note.textContent = 'Pronto. Toca em enviar.';
+      note.style.color = '';
+      note.dataset.warned = '';
+    }
+  }
+
+  document.getElementById('ficha').addEventListener('input', refresh);
+  document.getElementById('ficha').addEventListener('change', refresh);
+  refresh();
+
+  function arrived() {
+    document.getElementById('sentName').textContent =
+      val('first') + ' ' + val('last') + ', está feito.';
+    document.getElementById('sent').hidden = false;
+    document.getElementById('ficha').hidden = true;
+    document.getElementById('bar').hidden = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  send.addEventListener('click', function () {
+    if (send.getAttribute('aria-disabled') === 'true') {
+      note.textContent = 'Falta o nome próprio ou o apelido.';
+      note.style.color = 'var(--warn)';
+      note.dataset.warned = 'yes';
+      document.getElementById(val('first') ? 'last' : 'first').focus();
+      return;
+    }
+
+    var data = entry();
+    data.ref = REF;
+    data.via = 'site';
+
+    send.disabled = true;
+    send.setAttribute('aria-disabled', 'true');
+    send.textContent = 'A enviar…';
+    note.style.color = '';
+    note.textContent = 'Um momento.';
+
+    fetch(SEND_TO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function (r) {
+      if (!r.ok) { throw new Error('rejected'); }
+      arrived();
+    }).catch(function () {
+      // The same reference goes out again, so a retry after a send that
+      // actually landed cannot enter him a second time.
+      send.disabled = false;
+      send.setAttribute('aria-disabled', 'false');
+      send.textContent = 'Tentar outra vez';
+      note.textContent = 'Não consegui enviar. Vê a internet e tenta outra vez.';
+      note.style.color = 'var(--warn)';
+    });
+  });
+</script>
+</body>
+</html>
