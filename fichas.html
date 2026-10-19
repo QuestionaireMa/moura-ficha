@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fichas recebidas — Moura Academy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  :root {
+    color-scheme: dark;
+    --ground: #0B0D10;
+    --panel: #141920;
+    --panel-edge: #222A34;
+    --ink: #F2F4F7;
+    --ink-soft: #99A2AE;
+    --ink-faint: #6B7585;
+    --accent: #3B9EFF;
+    --accent-ink: #06121F;
+    --pitch: #3DDC84;
+    --warn: #FFB020;
+    --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--body); font-size: 16px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 44rem; margin-inline: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px calc(40px + env(safe-area-inset-bottom, 0px));
+  }
+
+  header { margin-bottom: 22px; }
+  .crest {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--display); font-size: 15px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  }
+  .crest span { width: 7px; height: 7px; border-radius: 50%; background: var(--pitch); }
+  h1 {
+    font-family: var(--display); font-size: clamp(2.2rem, 10vw, 3rem);
+    line-height: 0.95; margin: 10px 0 6px;
+  }
+  .count { color: var(--ink-soft); margin: 0; }
+
+  .row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 16px; }
+  button, input {
+    font: inherit; font-size: 16px; color: var(--ink);
+    background: var(--ground); border: 1px solid var(--panel-edge);
+    border-radius: 10px; padding: 12px;
+  }
+  button { cursor: pointer; }
+  .go { background: var(--accent); color: var(--accent-ink); font-weight: 700; border-color: var(--accent); }
+  .quiet { color: var(--ink-soft); }
+  input { width: 100%; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .gate { border: 1px solid var(--panel-edge); background: var(--panel); border-radius: 14px; padding: 18px; }
+  .gate p { margin: 0 0 12px; color: var(--ink-soft); }
+  .bad { color: var(--warn); margin: 10px 0 0; }
+
+  .card {
+    border: 1px solid var(--panel-edge); background: var(--panel);
+    border-radius: 14px; padding: 15px; margin-top: 12px;
+  }
+  .who { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .who h2 { font-family: var(--display); font-size: 1.55rem; margin: 0; line-height: 1.1; }
+  .alcunha { color: var(--ink-faint); font-size: 14px; }
+  .tag {
+    margin-left: auto; font-family: var(--display); font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent-ink); background: var(--accent);
+    border-radius: 999px; padding: 3px 10px;
+  }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; margin: 12px 0 0; }
+  dt {
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-faint); padding-top: 2px;
+  }
+  dd { margin: 0; }
+  .when { margin: 11px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+  .nobody { color: var(--ink-soft); margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="crest"><span></span>Moura Academy</div>
+    <h1>Fichas recebidas</h1>
+    <p class="count" id="count">A carregar…</p>
+  </header>
+
+  <div class="gate" id="gate" hidden>
+    <p>Escreve o teu código de treinador para veres as fichas.</p>
+    <input id="code" autocapitalize="characters" autocomplete="off" spellcheck="false">
+    <p class="bad" id="bad" hidden>Esse código não serve.</p>
+    <div class="row"><button class="go" id="enter">Ver as fichas</button></div>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="row" id="tools" hidden>
+    <button id="again">Atualizar</button>
+    <button class="quiet" id="forget">Esquecer o código</button>
+  </div>
+</div>
+
+<script>
+  var SOURCE = 'https://kopdyeeszpeszammyoml.supabase.co/functions/v1/ficha';
+  var KEEP = 'moura-coach-code';
+
+  var FOOT = { left: 'Esquerdo', right: 'Direito', both: 'Ambos' };
+  var POS = {
+    GK: 'Guarda-redes', CB: 'Defesa central', LB: 'Lateral esquerdo', RB: 'Lateral direito',
+    CDM: 'Médio defensivo', CM: 'Médio centro', CAM: 'Médio ofensivo',
+    LW: 'Extremo esquerdo', RW: 'Extremo direito', ST: 'Avançado'
+  };
+  var COUNTRY = {
+    PT: 'Portugal', BR: 'Brasil', CV: 'Cabo Verde', AO: 'Angola', GW: 'Guiné-Bissau',
+    ST: 'São Tomé e Príncipe', MZ: 'Moçambique', UA: 'Ucrânia', RO: 'Roménia',
+    MD: 'Moldávia', NP: 'Nepal', IN: 'Índia', BD: 'Bangladeche', PK: 'Paquistão',
+    FR: 'França', ES: 'Espanha', GB: 'Reino Unido', VE: 'Venezuela', AL: 'Albânia',
+    DE: 'Alemanha', AT: 'Áustria', BE: 'Bélgica', BY: 'Bielorrússia',
+    BA: 'Bósnia e Herzegovina', BG: 'Bulgária', CY: 'Chipre', HR: 'Croácia',
+    DK: 'Dinamarca', SK: 'Eslováquia', SI: 'Eslovénia', EE: 'Estónia', FI: 'Finlândia',
+    GE: 'Geórgia', GR: 'Grécia', HU: 'Hungria', IE: 'Irlanda', IS: 'Islândia',
+    IT: 'Itália', XK: 'Kosovo', LV: 'Letónia', LT: 'Lituânia', LU: 'Luxemburgo',
+    MK: 'Macedónia do Norte', MT: 'Malta', ME: 'Montenegro', NO: 'Noruega',
+    NL: 'Países Baixos', PL: 'Polónia', CZ: 'Chéquia', RS: 'Sérvia', RU: 'Rússia',
+    SE: 'Suécia', CH: 'Suíça', TR: 'Turquia', ZA: 'África do Sul', DZ: 'Argélia',
+    BJ: 'Benim', BW: 'Botsuana', BF: 'Burquina Faso', BI: 'Burundi', CM: 'Camarões',
+    TD: 'Chade', CG: 'Congo', CI: 'Costa do Marfim', EG: 'Egito', ER: 'Eritreia',
+    ET: 'Etiópia', GA: 'Gabão', GM: 'Gâmbia', GH: 'Gana', GN: 'Guiné',
+    GQ: 'Guiné Equatorial', LR: 'Libéria', LY: 'Líbia', MW: 'Maláui', ML: 'Mali',
+    MA: 'Marrocos', MR: 'Mauritânia', NA: 'Namíbia', NE: 'Níger', NG: 'Nigéria',
+    KE: 'Quénia', CD: 'Rep. Dem. do Congo', RW: 'Ruanda', SN: 'Senegal',
+    SL: 'Serra Leoa', SO: 'Somália', SD: 'Sudão', TZ: 'Tanzânia', TG: 'Togo',
+    TN: 'Tunísia', UG: 'Uganda', ZM: 'Zâmbia', ZW: 'Zimbabué', AR: 'Argentina',
+    BO: 'Bolívia', CA: 'Canadá', CL: 'Chile', CO: 'Colômbia', CR: 'Costa Rica',
+    CU: 'Cuba', SV: 'El Salvador', EC: 'Equador', US: 'Estados Unidos',
+    GT: 'Guatemala', GY: 'Guiana', HT: 'Haiti', HN: 'Honduras', JM: 'Jamaica',
+    MX: 'México', NI: 'Nicarágua', PA: 'Panamá', PY: 'Paraguai', PE: 'Peru',
+    DO: 'Rep. Dominicana', SR: 'Suriname', TT: 'Trindade e Tobago', UY: 'Uruguai',
+    AF: 'Afeganistão', SA: 'Arábia Saudita', AM: 'Arménia', AU: 'Austrália',
+    AZ: 'Azerbaijão', KH: 'Camboja', QA: 'Catar', KZ: 'Cazaquistão', CN: 'China',
+    KR: 'Coreia do Sul', AE: 'Emirados Árabes Unidos', PH: 'Filipinas',
+    ID: 'Indonésia', IR: 'Irão', IQ: 'Iraque', IL: 'Israel', JP: 'Japão',
+    JO: 'Jordânia', KW: 'Koweit', LB: 'Líbano', MY: 'Malásia', MM: 'Myanmar',
+    MN: 'Mongólia', NZ: 'Nova Zelândia', OM: 'Omã', PS: 'Palestina',
+    LK: 'Sri Lanka', SY: 'Síria', TH: 'Tailândia', TW: 'Taiwan', TL: 'Timor-Leste',
+    UZ: 'Uzbequistão', VN: 'Vietname', YE: 'Iémen'
+  };
+
+  var gate = document.getElementById('gate');
+  var list = document.getElementById('list');
+  var count = document.getElementById('count');
+  var tools = document.getElementById('tools');
+  var bad = document.getElementById('bad');
+
+  function named(code, table) { return table[code] || code; }
+
+  // His age on the day he filled the ficha in, which is the number a coach
+  // reads: a birthday alone needs doing in your head.
+  function age(iso) {
+    if (!iso) { return null; }
+    var born = new Date(iso + 'T00:00:00');
+    var now = new Date();
+    var years = now.getFullYear() - born.getFullYear();
+    var before = now.getMonth() < born.getMonth() ||
+      (now.getMonth() === born.getMonth() && now.getDate() < born.getDate());
+    return before ? years - 1 : years;
+  }
+
+  function day(iso) {
+    if (!iso) { return ''; }
+    var p = iso.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  function arrived(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('pt-PT') + ' às ' +
+      d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function line(dl, label, value) {
+    if (!value) { return; }
+    var dt = document.createElement('dt');
+    dt.textContent = label;
+    var dd = document.createElement('dd');
+    dd.textContent = value;
+    dl.appendChild(dt);
+    dl.appendChild(dd);
+  }
+
+  function draw(rows) {
+    list.textContent = '';
+    count.textContent = rows.length === 0 ? 'Ainda não chegou nenhuma.'
+      : rows.length === 1 ? '1 ficha.' : rows.length + ' fichas.';
+
+    rows.forEach(function (r) {
+      var card = document.createElement('div');
+      card.className = 'card';
+
+      var who = document.createElement('div');
+      who.className = 'who';
+      var h2 = document.createElement('h2');
+      h2.textContent = (r.first_name || '') + ' ' + (r.last_name || '');
+      who.appendChild(h2);
+      if (r.known_as) {
+        var nick = document.createElement('span');
+        nick.className = 'alcunha';
+        nick.textContent = '"' + r.known_as + '"';
+        who.appendChild(nick);
+      }
+      if (r.squad_hint) {
+        var tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = /^U\d+$/.test(r.squad_hint)
+          ? 'Sub-' + r.squad_hint.slice(1) : r.squad_hint;
+        who.appendChild(tag);
+      }
+      card.appendChild(who);
+
+      var dl = document.createElement('dl');
+      var years = age(r.date_of_birth);
+      line(dl, 'Idade', r.date_of_birth
+        ? day(r.date_of_birth) + (years === null ? '' : '  ·  ' + years + ' anos') : '');
+      line(dl, 'País', (r.nationalities || []).map(function (c) {
+        return named(c, COUNTRY);
+      }).join(', '));
+      line(dl, 'Pé', named(r.preferred_foot, FOOT));
+      line(dl, 'Posição', named(r.primary_position, POS));
+      line(dl, 'Também', (r.secondary_positions || []).map(function (c) {
+        return named(c, POS);
+      }).join(', '));
+      card.appendChild(dl);
+
+      var when = document.createElement('p');
+      when.className = 'when';
+      when.textContent = 'Enviada ' + arrived(r.submitted_at);
+      card.appendChild(when);
+
+      list.appendChild(card);
+    });
+
+    tools.hidden = false;
+  }
+
+  function load(code, fromGate) {
+    count.textContent = 'A carregar…';
+    return fetch(SOURCE + '?list=' + encodeURIComponent(code))
+      .then(function (r) {
+        if (r.status === 403) { throw new Error('code'); }
+        if (!r.ok) { throw new Error('server'); }
+        return r.json();
+      })
+      .then(function (rows) {
+        try { localStorage.setItem(KEEP, code); } catch (e) { /* private window */ }
+        gate.hidden = true;
+        bad.hidden = true;
+        draw(rows);
+      })
+      .catch(function (e) {
+        tools.hidden = true;
+        list.textContent = '';
+        gate.hidden = false;
+        count.textContent = '';
+        if (e.message === 'code') {
+          bad.textContent = fromGate ? 'Esse código não serve.'
+            : 'O código guardado já não serve.';
+          bad.hidden = false;
+          try { localStorage.removeItem(KEEP); } catch (err) { /* ignore */ }
+        } else {
+          bad.textContent = 'Não consegui ligar. Vê a internet e tenta outra vez.';
+          bad.hidden = false;
+        }
+      });
+  }
+
+  document.getElementById('enter').addEventListener('click', function () {
+    var code = document.getElementById('code').value.trim().toUpperCase();
+    if (code) { load(code, true); }
+  });
+  document.getElementById('code').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { document.getElementById('enter').click(); }
+  });
+  document.getElementById('again').addEventListener('click', function () {
+    var kept = '';
+    try { kept = localStorage.getItem(KEEP) || ''; } catch (e) { /* ignore */ }
+    if (kept) { load(kept, false); }
+  });
+  document.getElementById('forget').addEventListener('click', function () {
+    try { localStorage.removeItem(KEEP); } catch (e) { /* ignore */ }
+    location.reload();
+  });
+
+  // The code is remembered on this phone only, so the page opens straight
+  // onto the fichas every time after the first.
+  (function () {
+    var kept = '';
+    try { kept = localStorage.getItem(KEEP) || ''; } catch (e) { /* ignore */ }
+    if (kept) { load(kept, false); } else { gate.hidden = false; count.textContent = ''; }
+  })();
+</script>
+</body>
+</html>
