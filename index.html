@@ -89,6 +89,13 @@
     text-transform: uppercase; color: var(--ink-soft);
   }
   .lab em { font-style: normal; color: var(--warn); }
+  .lab i {
+    font-style: normal; font-weight: 500; text-transform: none;
+    letter-spacing: 0; color: var(--ink-faint);
+  }
+  /* What the send button points at, so a missing answer is found at a
+     glance instead of hunted for. */
+  .wants { border-color: var(--warn) !important; }
   .hint { font-size: 12.5px; color: var(--ink-faint); }
 
   input, select {
@@ -230,16 +237,16 @@
         <input id="last" autocomplete="family-name" autocapitalize="words">
       </label>
       <label for="known">
-        <span class="lab">Como te chamam</span>
+        <span class="lab">Como te chamam <i>opcional</i></span>
         <input id="known" autocapitalize="words">
         <span class="hint">O nome que ouves no treino. Em branco se for o teu.</span>
       </label>
       <label for="dob">
-        <span class="lab">Data de nascimento</span>
+        <span class="lab">Data de nascimento <em>*</em></span>
         <input id="dob" type="date">
       </label>
       <div class="field">
-        <span class="lab">Nacionalidade</span>
+        <span class="lab">Nacionalidade <em>*</em></span>
         <button type="button" class="picker" id="natBtn" aria-expanded="false">
           <span id="natLabel">Escolhe</span>
         </button>
@@ -253,7 +260,7 @@
     <fieldset>
       <legend>Em campo</legend>
       <label for="foot">
-        <span class="lab">Pé preferido</span>
+        <span class="lab">Pé preferido <em>*</em></span>
         <span class="sel">
           <select id="foot">
             <option value="">Escolhe</option>
@@ -265,13 +272,13 @@
       </label>
 
       <label for="pos">
-        <span class="lab">Posição principal</span>
+        <span class="lab">Posição principal <em>*</em></span>
         <span class="sel"><select id="pos" class="positions"></select></span>
         <span class="hint">Onde jogas quase sempre.</span>
       </label>
 
       <div class="field">
-        <span class="lab">Também podes jogar a</span>
+        <span class="lab">Também podes jogar a <i>opcional</i></span>
         <button type="button" class="picker" id="altBtn" aria-expanded="false">
           <span id="altLabel">Nenhuma</span>
         </button>
@@ -280,7 +287,7 @@
       </div>
 
       <label for="cat">
-        <span class="lab">Escalão</span>
+        <span class="lab">Escalão <em>*</em></span>
         <span class="sel">
           <select id="cat">
             <option value="">Escolhe</option>
@@ -293,7 +300,7 @@
       </label>
 
       <label for="squad" id="otherWrap" hidden>
-        <span class="lab">Qual?</span>
+        <span class="lab">Qual? <em>*</em></span>
         <input id="squad" autocapitalize="words">
       </label>
     </fieldset>
@@ -303,7 +310,7 @@
 <div class="bar" id="bar">
   <div class="bar-inner">
     <button class="send" id="send" type="button" aria-disabled="true">Enviar ao treinador</button>
-    <p class="barnote" id="note">O nome próprio e o apelido chegam. O resto ajuda.</p>
+    <p class="barnote" id="note">Tudo menos a alcunha e as outras posições.</p>
   </div>
 </div>
 
@@ -582,6 +589,44 @@
     alt.describe();
   }
 
+  /*
+   * Everything is asked for except the nickname and the other positions.
+   * The send button names the FIRST thing missing and takes him to it:
+   * a list of complaints at the foot of a long form is a list nobody
+   * reads.
+   */
+  function missing() {
+    var cat = val('cat');
+    var wanted = [
+      ['first', !val('first'), 'Falta o nome próprio.'],
+      ['last', !val('last'), 'Falta o apelido.'],
+      ['dob', !val('dob'), 'Falta a data de nascimento.'],
+      ['natBtn', nat.values().length === 0, 'Falta a nacionalidade.'],
+      ['foot', !val('foot'), 'Falta o pé preferido.'],
+      ['pos', !val('pos'), 'Falta a posição principal.'],
+      ['cat', !cat, 'Falta o escalão.'],
+      ['squad', cat === 'OUTRO' && !val('squad'), 'Escreve qual é o escalão.']
+    ];
+    for (var i = 0; i < wanted.length; i++) {
+      if (wanted[i][1]) { return { id: wanted[i][0], say: wanted[i][2] }; }
+    }
+    return null;
+  }
+
+  function complain(id, say) {
+    var el = document.getElementById(id);
+    note.textContent = say;
+    note.style.color = 'var(--warn)';
+    note.dataset.warned = 'yes';
+    el.classList.add('wants');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    el.addEventListener('input', function off() {
+      el.classList.remove('wants');
+      el.removeEventListener('input', off);
+    });
+  }
+
   function entry() {
     var cat = val('cat');
     return {
@@ -605,14 +650,17 @@
   var REF = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
   function refresh() {
-    var ready = val('first') && val('last');
-    send.setAttribute('aria-disabled', ready ? 'false' : 'true');
     document.getElementById('otherWrap').hidden = val('cat') !== 'OUTRO';
     syncChips();
+    var ready = !missing();
+    send.setAttribute('aria-disabled', ready ? 'false' : 'true');
     if (ready && note.dataset.warned === 'yes') {
       note.textContent = 'Pronto. Toca em enviar.';
       note.style.color = '';
       note.dataset.warned = '';
+      Array.prototype.forEach.call(document.querySelectorAll('.wants'), function (el) {
+        el.classList.remove('wants');
+      });
     }
   }
 
@@ -630,20 +678,15 @@
   }
 
   send.addEventListener('click', function () {
-    if (send.getAttribute('aria-disabled') === 'true') {
-      note.textContent = 'Falta o nome próprio ou o apelido.';
-      note.style.color = 'var(--warn)';
-      note.dataset.warned = 'yes';
-      document.getElementById(val('first') ? 'last' : 'first').focus();
+    var gap = missing();
+    if (gap) {
+      complain(gap.id, gap.say);
       return;
     }
 
     var dobBox = document.getElementById('dob');
-    if (dobBox.value && dobBox.validity && dobBox.validity.rangeOverflow) {
-      note.textContent = 'Essa data de nascimento não pode estar certa.';
-      note.style.color = 'var(--warn)';
-      note.dataset.warned = 'yes';
-      dobBox.focus();
+    if (dobBox.validity && (dobBox.validity.rangeOverflow || dobBox.validity.rangeUnderflow)) {
+      complain('dob', 'Essa data de nascimento não pode estar certa.');
       return;
     }
 
