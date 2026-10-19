@@ -34,6 +34,11 @@
     --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
+  /* The send bar is fixed over the foot of the page, so anything the
+     browser scrolls to - a focused box, an opened list - has to stop
+     short of it or it lands underneath. */
+  html { scroll-padding-bottom: 180px; scroll-behavior: smooth; }
+
   body {
     background: var(--ground);
     color: var(--ink);
@@ -166,6 +171,15 @@
   }
   .panel > :first-child { border-top: 0; }
   .panel.tall { max-height: 44vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Sticky foot of an open list. Tapping outside closes it too, but after
+     scrolling through ninety countries "outside" is a long way away. */
+  .done-row {
+    position: sticky; bottom: 0; width: 100%;
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--accent);
+    background: var(--panel); border: 0; border-top: 1px solid var(--panel-edge);
+    padding: 13px; cursor: pointer; text-align: center;
+  }
   .search {
     position: sticky; top: 0; z-index: 1;
     border: 0; border-bottom: 1px solid var(--panel-edge); border-radius: 0;
@@ -222,7 +236,7 @@
       </label>
       <label for="dob">
         <span class="lab">Data de nascimento</span>
-        <input id="dob" type="date" min="1940-01-01">
+        <input id="dob" type="date">
       </label>
       <div class="field">
         <span class="lab">Nacionalidade</span>
@@ -384,9 +398,8 @@
   });
 
   var openPanels = [];
-  document.addEventListener('click', function () {
-    openPanels.forEach(function (close) { close(); });
-  });
+  function closeAll() { openPanels.forEach(function (close) { close(); }); }
+  document.addEventListener('click', closeAll);
 
   /*
    * A field that looks like the dropdowns around it and keeps more than
@@ -477,15 +490,35 @@
     function open(yes) {
       panel.hidden = !yes;
       btn.setAttribute('aria-expanded', yes ? 'true' : 'false');
-      if (yes && search) { search.focus(); }
+      if (!yes) { return; }
+      /* An opened list can hang below the fold, or behind the send bar, and
+         a boy who sees no change taps the field again and closes it. So the
+         page comes to it, leaving the bar clear. */
+      requestAnimationFrame(function () {
+        var bar = document.getElementById('bar');
+        var floor = window.innerHeight - (bar ? bar.offsetHeight : 0) - 10;
+        var box = panel.getBoundingClientRect();
+        if (box.bottom > floor) {
+          window.scrollBy({ top: Math.min(box.bottom - floor, box.top - 12), behavior: 'smooth' });
+        }
+      });
     }
 
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      open(panel.hidden);
+      var wanted = panel.hidden;
+      closeAll();                 // never two lists open at once
+      open(wanted);
     });
     panel.addEventListener('click', function (e) { e.stopPropagation(); });
     openPanels.push(function () { open(false); });
+
+    var done = document.createElement('button');
+    done.type = 'button';
+    done.className = 'done-row';
+    done.textContent = 'Pronto';
+    done.addEventListener('click', function () { open(false); btn.focus(); });
+    panel.appendChild(done);
 
     /* Typed letters match however the name is accented: a boy looking for
        Índia types "india" and a boy looking for Suíça types "suica". */
@@ -518,8 +551,20 @@
   var alt = makePicker('alt', LINES, { empty: 'Nenhuma', many: 'posições' });
   var nat = makePicker('nat', COUNTRIES, { empty: 'Escolhe', many: 'nacionalidades' });
 
-  // Nobody is born tomorrow.
-  document.getElementById('dob').max = new Date().toISOString().slice(0, 10);
+  /* The date box opens on today, and a boy who taps it and closes it
+     again leaves today's date sitting there - which is how two fichas
+     arrived claiming a player born this week. Today is now outside the
+     range the box will accept, so that slip cannot be saved. */
+  (function () {
+    var dob = document.getElementById('dob');
+    var now = new Date();
+    function stamp(yearsAgo) {
+      var d = new Date(now.getFullYear() - yearsAgo, now.getMonth(), now.getDate());
+      return d.toISOString().slice(0, 10);
+    }
+    dob.max = stamp(8);
+    dob.min = stamp(45);
+  })();
 
   function val(id) { return (document.getElementById(id).value || '').trim(); }
 
@@ -590,6 +635,15 @@
       note.style.color = 'var(--warn)';
       note.dataset.warned = 'yes';
       document.getElementById(val('first') ? 'last' : 'first').focus();
+      return;
+    }
+
+    var dobBox = document.getElementById('dob');
+    if (dobBox.value && dobBox.validity && dobBox.validity.rangeOverflow) {
+      note.textContent = 'Essa data de nascimento não pode estar certa.';
+      note.style.color = 'var(--warn)';
+      note.dataset.warned = 'yes';
+      dobBox.focus();
       return;
     }
 
