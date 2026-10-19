@@ -165,6 +165,13 @@
     padding: 11px 13px 5px; border-top: 1px solid var(--panel-edge);
   }
   .panel > :first-child { border-top: 0; }
+  .panel.tall { max-height: 44vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .search {
+    position: sticky; top: 0; z-index: 1;
+    border: 0; border-bottom: 1px solid var(--panel-edge); border-radius: 0;
+    background: var(--panel);
+  }
+  .empty { padding: 14px 13px; color: var(--ink-faint); font-size: 14.5px; }
   .barnote { font-size: 12.5px; color: var(--ink-faint); text-align: center; margin: 0; }
 
   .done {
@@ -217,25 +224,16 @@
         <span class="lab">Data de nascimento</span>
         <input id="dob" type="date" min="1940-01-01">
       </label>
-      <label for="nat">
+      <div class="field">
         <span class="lab">Nacionalidade</span>
-        <span class="sel">
-          <select id="nat">
-            <option value="PT">Portugal</option>
-            <option value="BR">Brasil</option>
-            <option value="CV">Cabo Verde</option>
-            <option value="AO">Angola</option>
-            <option value="GW">Guiné-Bissau</option>
-            <option value="ST">São Tomé e Príncipe</option>
-            <option value="MZ">Moçambique</option>
-            <option value="FR">França</option>
-            <option value="ES">Espanha</option>
-            <option value="GB">Reino Unido</option>
-            <option value="US">Estados Unidos</option>
-            <option value="">Outra</option>
-          </select>
-        </span>
-      </label>
+        <button type="button" class="picker" id="natBtn" aria-expanded="false">
+          <span id="natLabel">Escolhe</span>
+        </button>
+        <div class="panel tall" id="natPanel" hidden>
+          <input class="search" id="natSearch" type="search" placeholder="Procura o país" autocomplete="off" autocapitalize="words">
+        </div>
+        <span class="hint">Se tens mais do que uma, escolhe todas.</span>
+      </div>
     </fieldset>
 
     <fieldset>
@@ -308,6 +306,66 @@
     ['Ataque', [['LW', 'Extremo esquerdo'], ['RW', 'Extremo direito'], ['ST', 'Avançado']]]
   ];
 
+  /* Portugal first and then the countries an academy here actually meets,
+     by continent. Not every flag in the world: a list he can finish. */
+  var COUNTRIES = [
+    ['Mais comuns', [
+      ['PT', 'Portugal'], ['BR', 'Brasil'], ['CV', 'Cabo Verde'], ['AO', 'Angola'],
+      ['GW', 'Guiné-Bissau'], ['ST', 'São Tomé e Príncipe'], ['MZ', 'Moçambique'],
+      ['UA', 'Ucrânia'], ['RO', 'Roménia'], ['MD', 'Moldávia'], ['NP', 'Nepal'],
+      ['IN', 'Índia'], ['BD', 'Bangladeche'], ['PK', 'Paquistão'],
+      ['FR', 'França'], ['ES', 'Espanha'], ['GB', 'Reino Unido'], ['VE', 'Venezuela']
+    ]],
+    ['Europa', [
+      ['AL', 'Albânia'], ['DE', 'Alemanha'], ['AT', 'Áustria'], ['BE', 'Bélgica'],
+      ['BY', 'Bielorrússia'], ['BA', 'Bósnia e Herzegovina'], ['BG', 'Bulgária'],
+      ['CY', 'Chipre'], ['HR', 'Croácia'], ['DK', 'Dinamarca'], ['SK', 'Eslováquia'],
+      ['SI', 'Eslovénia'], ['EE', 'Estónia'], ['FI', 'Finlândia'], ['GE', 'Geórgia'],
+      ['GR', 'Grécia'], ['HU', 'Hungria'], ['IE', 'Irlanda'], ['IS', 'Islândia'],
+      ['IT', 'Itália'], ['XK', 'Kosovo'], ['LV', 'Letónia'], ['LT', 'Lituânia'],
+      ['LU', 'Luxemburgo'], ['MK', 'Macedónia do Norte'], ['MT', 'Malta'],
+      ['ME', 'Montenegro'], ['NO', 'Noruega'], ['NL', 'Países Baixos'],
+      ['PL', 'Polónia'], ['CZ', 'Chéquia'], ['RS', 'Sérvia'], ['RU', 'Rússia'],
+      ['SE', 'Suécia'], ['CH', 'Suíça'], ['TR', 'Turquia']
+    ]],
+    ['África', [
+      ['ZA', 'África do Sul'], ['DZ', 'Argélia'], ['BJ', 'Benim'], ['BW', 'Botsuana'],
+      ['BF', 'Burquina Faso'], ['BI', 'Burundi'], ['CM', 'Camarões'], ['TD', 'Chade'],
+      ['CG', 'Congo'], ['CI', 'Costa do Marfim'], ['EG', 'Egito'], ['ER', 'Eritreia'],
+      ['ET', 'Etiópia'], ['GA', 'Gabão'], ['GM', 'Gâmbia'], ['GH', 'Gana'],
+      ['GN', 'Guiné'], ['GQ', 'Guiné Equatorial'], ['LR', 'Libéria'], ['LY', 'Líbia'],
+      ['MW', 'Maláui'], ['ML', 'Mali'], ['MA', 'Marrocos'], ['MR', 'Mauritânia'],
+      ['NA', 'Namíbia'], ['NE', 'Níger'], ['NG', 'Nigéria'], ['KE', 'Quénia'],
+      ['CD', 'República Democrática do Congo'], ['RW', 'Ruanda'], ['SN', 'Senegal'],
+      ['SL', 'Serra Leoa'], ['SO', 'Somália'], ['SD', 'Sudão'], ['TZ', 'Tanzânia'],
+      ['TG', 'Togo'], ['TN', 'Tunísia'], ['UG', 'Uganda'], ['ZM', 'Zâmbia'],
+      ['ZW', 'Zimbabué']
+    ]],
+    ['Américas', [
+      ['AR', 'Argentina'], ['BO', 'Bolívia'], ['CA', 'Canadá'], ['CL', 'Chile'],
+      ['CO', 'Colômbia'], ['CR', 'Costa Rica'], ['CU', 'Cuba'], ['SV', 'El Salvador'],
+      ['EC', 'Equador'], ['US', 'Estados Unidos'], ['GT', 'Guatemala'],
+      ['GY', 'Guiana'], ['HT', 'Haiti'], ['HN', 'Honduras'], ['JM', 'Jamaica'],
+      ['MX', 'México'], ['NI', 'Nicarágua'], ['PA', 'Panamá'], ['PY', 'Paraguai'],
+      ['PE', 'Peru'], ['DO', 'República Dominicana'], ['SR', 'Suriname'],
+      ['TT', 'Trindade e Tobago'], ['UY', 'Uruguai']
+    ]],
+    ['Ásia e Oceânia', [
+      ['AF', 'Afeganistão'], ['SA', 'Arábia Saudita'], ['AM', 'Arménia'],
+      ['AU', 'Austrália'], ['AZ', 'Azerbaijão'], ['KH', 'Camboja'], ['QA', 'Catar'],
+      ['KZ', 'Cazaquistão'], ['CN', 'China'], ['KR', 'Coreia do Sul'],
+      ['AE', 'Emirados Árabes Unidos'], ['PH', 'Filipinas'], ['IN', 'Índia'],
+      ['ID', 'Indonésia'], ['IR', 'Irão'], ['IQ', 'Iraque'], ['IL', 'Israel'],
+      ['JP', 'Japão'], ['JO', 'Jordânia'], ['KW', 'Koweit'], ['LB', 'Líbano'],
+      ['MY', 'Malásia'], ['MM', 'Myanmar'], ['MN', 'Mongólia'],
+      ['NZ', 'Nova Zelândia'], ['OM', 'Omã'], ['PS', 'Palestina'],
+      ['LK', 'Sri Lanka'], ['SY', 'Síria'], ['TH', 'Tailândia'], ['TW', 'Taiwan'],
+      ['TL', 'Timor-Leste'], ['UZ', 'Uzbequistão'], ['VN', 'Vietname'],
+      ['YE', 'Iémen']
+    ]]
+  ];
+
+  // The one position he plays most stays an ordinary dropdown.
   var main = document.getElementById('pos');
   var none = document.createElement('option');
   none.value = '';
@@ -325,88 +383,158 @@
     main.appendChild(group);
   });
 
-  /* The other positions: a dropdown like the ones around it, except that
-     it keeps more than one answer. The four lines of the team head its
-     list, so a boy finds his position where he expects it. */
-  var altBtn = document.getElementById('altBtn');
-  var altPanel = document.getElementById('altPanel');
-  var altLabel = document.getElementById('altLabel');
+  var openPanels = [];
+  document.addEventListener('click', function () {
+    openPanels.forEach(function (close) { close(); });
+  });
 
-  LINES.forEach(function (line) {
-    var head = document.createElement('div');
-    head.className = 'optline';
-    head.textContent = line[0];
-    altPanel.appendChild(head);
-    line[1].forEach(function (pair) {
-      var o = document.createElement('button');
-      o.type = 'button';
-      o.className = 'opt';
-      o.value = pair[0];
-      o.setAttribute('aria-checked', 'false');
-      o.setAttribute('role', 'checkbox');
-      var box = document.createElement('span');
-      box.className = 'box';
-      box.textContent = '\u2713';
-      var name = document.createElement('span');
-      name.textContent = pair[1];
-      o.appendChild(box);
-      o.appendChild(name);
-      o.addEventListener('click', function () {
-        o.setAttribute('aria-checked', o.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
-        describe();
+  /*
+   * A field that looks like the dropdowns around it and keeps more than
+   * one answer: the closed box names what is inside, and the open one is
+   * a list of ticks under the headings the answers group into.
+   *
+   * `countWord` is what replaces the names once there are too many to
+   * read in a closed box, and `search` is for a list - the countries -
+   * nobody should have to scroll.
+   */
+  function makePicker(name, groups, text) {
+    var btn = document.getElementById(name + 'Btn');
+    var panel = document.getElementById(name + 'Panel');
+    var label = document.getElementById(name + 'Label');
+    var search = document.getElementById(name + 'Search');
+    var rows = [];
+
+    groups.forEach(function (group) {
+      var head = document.createElement('div');
+      head.className = 'optline';
+      head.textContent = group[0];
+      panel.appendChild(head);
+      var heads = [];
+      group[1].forEach(function (pair) {
+        var o = document.createElement('button');
+        o.type = 'button';
+        o.className = 'opt';
+        o.value = pair[0];
+        o.setAttribute('role', 'checkbox');
+        o.setAttribute('aria-checked', 'false');
+        var box = document.createElement('span');
+        box.className = 'box';
+        box.textContent = '\u2713';
+        var who = document.createElement('span');
+        who.textContent = pair[1];
+        o.appendChild(box);
+        o.appendChild(who);
+        o.addEventListener('click', function () {
+          var on = o.getAttribute('aria-checked') === 'true';
+          /* A country can sit under two headings (Índia is both common
+             and Asian), so every row carrying that code moves together. */
+          rows.forEach(function (r) {
+            if (r.el.value === o.value) {
+              r.el.setAttribute('aria-checked', on ? 'false' : 'true');
+            }
+          });
+          describe();
+        });
+        panel.appendChild(o);
+        rows.push({ el: o, head: head, name: pair[1] });
+        heads.push(o);
       });
-      altPanel.appendChild(o);
     });
-  });
 
-  function openAlt(yes) {
-    altPanel.hidden = !yes;
-    altBtn.setAttribute('aria-expanded', yes ? 'true' : 'false');
+    var nothingFound = document.createElement('div');
+    nothingFound.className = 'empty';
+    nothingFound.textContent = 'Nada com esse nome.';
+    nothingFound.hidden = true;
+    panel.appendChild(nothingFound);
+
+    function values() {
+      var seen = [];
+      rows.forEach(function (r) {
+        if (r.el.getAttribute('aria-checked') === 'true' &&
+            !r.el.disabled && seen.indexOf(r.el.value) < 0) {
+          seen.push(r.el.value);
+        }
+      });
+      return seen;
+    }
+
+    function describe() {
+      var names = [];
+      var seen = [];
+      rows.forEach(function (r) {
+        if (r.el.getAttribute('aria-checked') === 'true' &&
+            !r.el.disabled && seen.indexOf(r.el.value) < 0) {
+          seen.push(r.el.value);
+          names.push(r.name);
+        }
+      });
+      label.textContent = names.length === 0 ? text.empty
+        : names.length <= 2 ? names.join(', ')
+        : names.length + ' ' + text.many;
+      btn.classList.toggle('chosen', names.length > 0);
+    }
+
+    function open(yes) {
+      panel.hidden = !yes;
+      btn.setAttribute('aria-expanded', yes ? 'true' : 'false');
+      if (yes && search) { search.focus(); }
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      open(panel.hidden);
+    });
+    panel.addEventListener('click', function (e) { e.stopPropagation(); });
+    openPanels.push(function () { open(false); });
+
+    /* Typed letters match however the name is accented: a boy looking for
+       Índia types "india" and a boy looking for Suíça types "suica". */
+    function plain(s) {
+      return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    if (search) {
+      search.addEventListener('input', function () {
+        var q = plain(search.value.trim());
+        var showing = 0;
+        var live = [];
+        rows.forEach(function (r) {
+          var hit = !q || plain(r.name).indexOf(q) >= 0;
+          r.el.hidden = !hit;
+          if (hit) { showing++; live.push(r.head); }
+        });
+        rows.forEach(function (r) {
+          r.head.hidden = live.indexOf(r.head) < 0;
+        });
+        nothingFound.hidden = showing > 0;
+      });
+      search.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
+
+    describe();
+    return { values: values, describe: describe, rows: rows };
   }
 
-  altBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    openAlt(altPanel.hidden);
-  });
-  altPanel.addEventListener('click', function (e) { e.stopPropagation(); });
-  document.addEventListener('click', function () { openAlt(false); });
-
-  /* The closed field has to say what is inside it. Two names fit; beyond
-     that a count reads better than a line he cannot finish. */
-  function describe() {
-    var picked = otherPositions();
-    var names = picked.map(function (code) {
-      // lastChild, not textContent: the tick inside the box is text too.
-      return altPanel.querySelector('.opt[value="' + code + '"]').lastChild.textContent.trim();
-    });
-    altLabel.textContent = names.length === 0 ? 'Nenhuma'
-      : names.length <= 2 ? names.join(', ')
-      : names.length + ' posições';
-    altBtn.classList.toggle('chosen', names.length > 0);
-  }
+  var alt = makePicker('alt', LINES, { empty: 'Nenhuma', many: 'posições' });
+  var nat = makePicker('nat', COUNTRIES, { empty: 'Escolhe', many: 'nacionalidades' });
 
   // Nobody is born tomorrow.
   document.getElementById('dob').max = new Date().toISOString().slice(0, 10);
 
   function val(id) { return (document.getElementById(id).value || '').trim(); }
 
-  function otherPositions() {
-    var primary = val('pos');
-    return Array.prototype.filter.call(altPanel.querySelectorAll('.opt'), function (o) {
-      return o.getAttribute('aria-checked') === 'true' && o.value !== primary;
-    }).map(function (o) { return o.value; });
-  }
+  function otherPositions() { return alt.values(); }
 
   /* The position he plays most is already named above, so it greys out
      here rather than being offered to him twice. */
   function syncChips() {
     var primary = val('pos');
-    Array.prototype.forEach.call(altPanel.querySelectorAll('.opt'), function (o) {
-      var same = o.value === primary;
-      o.disabled = same;
-      if (same) { o.setAttribute('aria-checked', 'false'); }
+    alt.rows.forEach(function (r) {
+      var same = r.el.value === primary;
+      r.el.disabled = same;
+      if (same) { r.el.setAttribute('aria-checked', 'false'); }
     });
-    describe();
+    alt.describe();
   }
 
   function entry() {
@@ -416,7 +544,7 @@
       lastName: val('last'),
       knownAs: val('known'),
       dateOfBirth: val('dob'),
-      nationalities: val('nat') ? [val('nat')] : [],
+      nationalities: nat.values(),
       preferredFoot: val('foot') || null,
       primaryPosition: val('pos'),
       secondaryPositions: otherPositions(),
