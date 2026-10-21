@@ -132,6 +132,16 @@
     text-align: center; text-decoration: none; cursor: pointer;
   }
   .send[aria-disabled="true"] { opacity: 0.45; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .lang { display: flex; gap: 4px; }
+  .lang button {
+    font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--ink-faint); background: var(--panel);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    padding: 5px 9px; cursor: pointer;
+  }
+  .lang button[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+
   .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   /* Looks like the dropdowns around it, but holds more than one answer. */
   .picker {
@@ -213,94 +223,100 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="crest"><span></span>Moura Academy</div>
-    <h1>Ficha do jogador</h1>
-    <p class="lede">Preenche os teus dados e envia. Demora um minuto.</p>
+    <div class="top">
+      <div class="crest"><span></span>Moura Academy</div>
+      <div class="lang" id="lang">
+        <button type="button" data-l="pt">PT</button>
+        <button type="button" data-l="en">EN</button>
+      </div>
+    </div>
+    <h1 data-k="title">Ficha do jogador</h1>
+    <p class="lede" data-k="lede">Preenche os teus dados e envia. Demora um minuto.</p>
   </header>
 
   <div class="done" id="sent" hidden>
     <div class="tick">&#10003;</div>
-    <h2>Ficha enviada</h2>
+    <h2 data-k="sentTitle">Ficha enviada</h2>
     <p id="sentName"></p>
-    <p>O treinador trata do resto.</p>
+    <p data-k="sentTail">O treinador trata do resto.</p>
   </div>
 
   <form id="ficha" novalidate>
     <fieldset>
-      <legend>Quem és</legend>
+      <legend data-k="who">Quem és</legend>
       <label for="first">
-        <span class="lab">Nome próprio <em>*</em></span>
+        <span class="lab" data-k="labFirst">Nome próprio <em>*</em></span>
         <input id="first" autocomplete="given-name" autocapitalize="words">
       </label>
       <label for="last">
-        <span class="lab">Apelido <em>*</em></span>
+        <span class="lab" data-k="labLast">Apelido <em>*</em></span>
         <input id="last" autocomplete="family-name" autocapitalize="words">
       </label>
       <label for="known">
-        <span class="lab">Como te chamam <i>opcional</i></span>
+        <span class="lab" data-k="labKnown">Como te chamam <i>opcional</i></span>
         <input id="known" autocapitalize="words">
-        <span class="hint">O nome que ouves no treino. Em branco se for o teu.</span>
+        <span class="hint" data-k="hintKnown">O nome que ouves no treino. Em branco se for o teu.</span>
       </label>
       <label for="dob">
-        <span class="lab">Data de nascimento <em>*</em></span>
+        <span class="lab" data-k="labDob">Data de nascimento <em>*</em></span>
         <input id="dob" type="date">
       </label>
       <div class="field">
-        <span class="lab">Nacionalidade <em>*</em></span>
+        <span class="lab" data-k="labNat">Nacionalidade <em>*</em></span>
         <button type="button" class="picker" id="natBtn" aria-expanded="false">
           <span id="natLabel">Escolhe</span>
         </button>
         <div class="panel tall" id="natPanel" hidden>
           <input class="search" id="natSearch" type="search" placeholder="Procura o país" autocomplete="off" autocapitalize="words">
         </div>
-        <span class="hint">Se tens mais do que uma, escolhe todas.</span>
+        <span class="hint" data-k="hintNat">Se tens mais do que uma, escolhe todas.</span>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Em campo</legend>
+      <legend data-k="pitch">Em campo</legend>
       <label for="foot">
-        <span class="lab">Pé preferido <em>*</em></span>
+        <span class="lab" data-k="labFoot">Pé preferido <em>*</em></span>
         <span class="sel">
           <select id="foot">
-            <option value="">Escolhe</option>
-            <option value="right">Direito</option>
-            <option value="left">Esquerdo</option>
-            <option value="both">Ambos</option>
+            <option value="" data-k="choose">Escolhe</option>
+            <option value="right" data-k="footR">Direito</option>
+            <option value="left" data-k="footL">Esquerdo</option>
+            <option value="both" data-k="footB">Ambos</option>
           </select>
         </span>
       </label>
 
       <label for="pos">
-        <span class="lab">Posição principal <em>*</em></span>
+        <span class="lab" data-k="labPos">Posição principal <em>*</em></span>
         <span class="sel"><select id="pos" class="positions"></select></span>
-        <span class="hint">Onde jogas quase sempre.</span>
+        <span class="hint" data-k="hintPos">Onde jogas quase sempre.</span>
       </label>
 
       <div class="field">
-        <span class="lab">Também podes jogar a <i>opcional</i></span>
+        <span class="lab" data-k="labAlt">Também podes jogar a <i>opcional</i></span>
         <button type="button" class="picker" id="altBtn" aria-expanded="false">
           <span id="altLabel">Nenhuma</span>
         </button>
         <div class="panel" id="altPanel" hidden></div>
-        <span class="hint">Podes escolher várias, ou nenhuma.</span>
+        <span class="hint" data-k="hintAlt">Podes escolher várias, ou nenhuma.</span>
       </div>
 
       <label for="cat">
-        <span class="lab">Escalão <em>*</em></span>
+        <span class="lab" data-k="labCat">Escalão <em>*</em></span>
         <span class="sel">
           <select id="cat">
-            <option value="">Escolhe</option>
-            <option value="U17">Sub-17</option>
-            <option value="U18">Sub-18</option>
-            <option value="U19">Sub-19</option>
-            <option value="OUTRO">Outro</option>
+            <option value="" data-k="choose">Escolhe</option>
+            <option value="U17" data-k="u17">Sub-17</option>
+            <option value="U18" data-k="u18">Sub-18</option>
+            <option value="U19" data-k="u19">Sub-19</option>
+            <option value="OUTRO" data-k="other">Outro</option>
           </select>
         </span>
       </label>
 
       <label for="squad" id="otherWrap" hidden>
-        <span class="lab">Qual? <em>*</em></span>
+        <span class="lab" data-k="labSquad">Qual? <em>*</em></span>
         <input id="squad" autocapitalize="words">
       </label>
     </fieldset>
@@ -309,8 +325,8 @@
 
 <div class="bar" id="bar">
   <div class="bar-inner">
-    <button class="send" id="send" type="button" aria-disabled="true">Enviar ao treinador</button>
-    <p class="barnote" id="note">Tudo menos a alcunha e as outras posições.</p>
+    <button class="send" id="send" type="button" aria-disabled="true" data-k="send">Enviar ao treinador</button>
+    <p class="barnote" id="note" data-k="noteDefault">Tudo menos a alcunha e as outras posições.</p>
   </div>
 </div>
 
@@ -320,6 +336,144 @@
   var SEND_TO = 'https://kopdyeeszpeszammyoml.supabase.co/functions/v1/ficha';
 
   // The four lines of a team, in the order a coach reads a sheet.
+
+  /*
+   * Two languages, one form.
+   *
+   * Every visible string has a key; the countries and the positions carry a
+   * second name beside their code. Nothing is rebuilt when the language
+   * changes - the same elements are re-labelled in place, so a half-filled
+   * form keeps every answer.
+   */
+  var WORDS = {
+    pt: {
+      title: 'Ficha do jogador',
+      lede: 'Preenche os teus dados e envia. Demora um minuto.',
+      who: 'Quem és', pitch: 'Em campo',
+      labFirst: 'Nome próprio <em>*</em>', labLast: 'Apelido <em>*</em>',
+      labKnown: 'Como te chamam <i>opcional</i>',
+      hintKnown: 'O nome que ouves no treino. Em branco se for o teu.',
+      labDob: 'Data de nascimento <em>*</em>',
+      labNat: 'Nacionalidade <em>*</em>', hintNat: 'Se tens mais do que uma, escolhe todas.',
+      labFoot: 'Pé preferido <em>*</em>',
+      choose: 'Escolhe', footR: 'Direito', footL: 'Esquerdo', footB: 'Ambos',
+      labPos: 'Posição principal <em>*</em>', hintPos: 'Onde jogas quase sempre.',
+      labAlt: 'Também podes jogar a <i>opcional</i>', hintAlt: 'Podes escolher várias, ou nenhuma.',
+      labCat: 'Escalão <em>*</em>',
+      u17: 'Sub-17', u18: 'Sub-18', u19: 'Sub-19', other: 'Outro',
+      labSquad: 'Qual? <em>*</em>',
+      send: 'Enviar ao treinador', sending: 'A enviar…', retry: 'Tentar outra vez',
+      noteDefault: 'Tudo menos a alcunha e as outras posições.',
+      noteReady: 'Pronto. Toca em enviar.', noteMoment: 'Um momento.',
+      noteFail: 'Não consegui enviar. Vê a internet e tenta outra vez.',
+      sentTitle: 'Ficha enviada', sentTail: 'O treinador trata do resto.',
+      sentName: ', está feito.',
+      search: 'Procura o país', nothing: 'Nada com esse nome.', ready: 'Pronto',
+      pickPos: 'Escolhe uma posição', none: 'Nenhuma',
+      manyPos: 'posições', manyNat: 'nacionalidades',
+      missFirst: 'Falta o nome próprio.', missLast: 'Falta o apelido.',
+      missDob: 'Falta a data de nascimento.', missNat: 'Falta a nacionalidade.',
+      missFoot: 'Falta o pé preferido.', missPos: 'Falta a posição principal.',
+      missCat: 'Falta o escalão.', missSquad: 'Escreve qual é o escalão.',
+      badDob: 'Essa data de nascimento não pode estar certa.'
+    },
+    en: {
+      title: 'Player form',
+      lede: 'Fill in your details and send. It takes a minute.',
+      who: 'Who you are', pitch: 'On the pitch',
+      labFirst: 'First name <em>*</em>', labLast: 'Surname <em>*</em>',
+      labKnown: 'What they call you <i>optional</i>',
+      hintKnown: 'The name you hear at training. Leave it empty if it is your own.',
+      labDob: 'Date of birth <em>*</em>',
+      labNat: 'Nationality <em>*</em>', hintNat: 'If you have more than one, pick them all.',
+      labFoot: 'Preferred foot <em>*</em>',
+      choose: 'Choose', footR: 'Right', footL: 'Left', footB: 'Both',
+      labPos: 'Main position <em>*</em>', hintPos: 'Where you play most of the time.',
+      labAlt: 'You can also play <i>optional</i>', hintAlt: 'Pick as many as you like, or none.',
+      labCat: 'Age group <em>*</em>',
+      u17: 'Under 17', u18: 'Under 18', u19: 'Under 19', other: 'Other',
+      labSquad: 'Which one? <em>*</em>',
+      send: 'Send to the coach', sending: 'Sending…', retry: 'Try again',
+      noteDefault: 'Everything but the nickname and the other positions.',
+      noteReady: 'Ready. Tap send.', noteMoment: 'One moment.',
+      noteFail: 'Could not send. Check your internet and try again.',
+      sentTitle: 'Form sent', sentTail: 'The coach takes it from here.',
+      sentName: ', that is done.',
+      search: 'Search for a country', nothing: 'Nothing by that name.', ready: 'Done',
+      pickPos: 'Choose a position', none: 'None',
+      manyPos: 'positions', manyNat: 'nationalities',
+      missFirst: 'The first name is missing.', missLast: 'The surname is missing.',
+      missDob: 'The date of birth is missing.', missNat: 'The nationality is missing.',
+      missFoot: 'The preferred foot is missing.', missPos: 'The main position is missing.',
+      missCat: 'The age group is missing.', missSquad: 'Write which age group it is.',
+      badDob: 'That date of birth cannot be right.'
+    }
+  };
+
+  /** The four lines of a team, and the ten positions, in both languages. */
+  var LINE_EN = { 'Baliza': 'Goal', 'Defesa': 'Defence', 'Meio-campo': 'Midfield', 'Ataque': 'Attack' };
+  var POS_EN = {
+    GK: 'Goalkeeper', CB: 'Centre-back', LB: 'Left-back', RB: 'Right-back',
+    CDM: 'Defensive midfielder', CM: 'Central midfielder', CAM: 'Attacking midfielder',
+    LW: 'Left winger', RW: 'Right winger', ST: 'Striker'
+  };
+  var GROUP_EN = {
+    'Mais comuns': 'Most common', 'Europa': 'Europe', 'África': 'Africa',
+    'Américas': 'The Americas', 'Ásia e Oceânia': 'Asia and Oceania'
+  };
+  var COUNTRY_EN = {
+    PT: 'Portugal', BR: 'Brazil', CV: 'Cape Verde', AO: 'Angola', GW: 'Guinea-Bissau',
+    ST: 'São Tomé and Príncipe', MZ: 'Mozambique', UA: 'Ukraine', RO: 'Romania',
+    MD: 'Moldova', NP: 'Nepal', IN: 'India', BD: 'Bangladesh', PK: 'Pakistan',
+    FR: 'France', ES: 'Spain', GB: 'United Kingdom', VE: 'Venezuela',
+    AL: 'Albania', DE: 'Germany', AT: 'Austria', BE: 'Belgium', BY: 'Belarus',
+    BA: 'Bosnia and Herzegovina', BG: 'Bulgaria', CY: 'Cyprus', HR: 'Croatia',
+    DK: 'Denmark', SK: 'Slovakia', SI: 'Slovenia', EE: 'Estonia', FI: 'Finland',
+    GE: 'Georgia', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IS: 'Iceland',
+    IT: 'Italy', XK: 'Kosovo', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg',
+    MK: 'North Macedonia', MT: 'Malta', ME: 'Montenegro', NO: 'Norway',
+    NL: 'Netherlands', PL: 'Poland', CZ: 'Czechia', RS: 'Serbia', RU: 'Russia',
+    SE: 'Sweden', CH: 'Switzerland', TR: 'Türkiye',
+    ZA: 'South Africa', DZ: 'Algeria', BJ: 'Benin', BW: 'Botswana',
+    BF: 'Burkina Faso', BI: 'Burundi', CM: 'Cameroon', TD: 'Chad', CG: 'Congo',
+    CI: 'Ivory Coast', EG: 'Egypt', ER: 'Eritrea', ET: 'Ethiopia', GA: 'Gabon',
+    GM: 'Gambia', GH: 'Ghana', GN: 'Guinea', GQ: 'Equatorial Guinea',
+    LR: 'Liberia', LY: 'Libya', MW: 'Malawi', ML: 'Mali', MA: 'Morocco',
+    MR: 'Mauritania', NA: 'Namibia', NE: 'Niger', NG: 'Nigeria', KE: 'Kenya',
+    CD: 'DR Congo', RW: 'Rwanda', SN: 'Senegal', SL: 'Sierra Leone',
+    SO: 'Somalia', SD: 'Sudan', TZ: 'Tanzania', TG: 'Togo', TN: 'Tunisia',
+    UG: 'Uganda', ZM: 'Zambia', ZW: 'Zimbabwe',
+    AR: 'Argentina', BO: 'Bolivia', CA: 'Canada', CL: 'Chile', CO: 'Colombia',
+    CR: 'Costa Rica', CU: 'Cuba', SV: 'El Salvador', EC: 'Ecuador',
+    US: 'United States', GT: 'Guatemala', GY: 'Guyana', HT: 'Haiti',
+    HN: 'Honduras', JM: 'Jamaica', MX: 'Mexico', NI: 'Nicaragua', PA: 'Panama',
+    PY: 'Paraguay', PE: 'Peru', DO: 'Dominican Republic', SR: 'Suriname',
+    TT: 'Trinidad and Tobago', UY: 'Uruguay',
+    AF: 'Afghanistan', SA: 'Saudi Arabia', AM: 'Armenia', AU: 'Australia',
+    AZ: 'Azerbaijan', KH: 'Cambodia', QA: 'Qatar', KZ: 'Kazakhstan', CN: 'China',
+    KR: 'South Korea', AE: 'United Arab Emirates', PH: 'Philippines',
+    ID: 'Indonesia', IR: 'Iran', IQ: 'Iraq', IL: 'Israel', JP: 'Japan',
+    JO: 'Jordan', KW: 'Kuwait', LB: 'Lebanon', MY: 'Malaysia', MM: 'Myanmar',
+    MN: 'Mongolia', NZ: 'New Zealand', OM: 'Oman', PS: 'Palestine',
+    LK: 'Sri Lanka', SY: 'Syria', TH: 'Thailand', TW: 'Taiwan',
+    TL: 'Timor-Leste', UZ: 'Uzbekistan', VN: 'Vietnam', YE: 'Yemen'
+  };
+
+  var LANG_KEY = 'moura-ficha-lang';
+  var lang = 'pt';
+  try {
+    var kept = localStorage.getItem(LANG_KEY);
+    lang = kept === 'en' || kept === 'pt' ? kept
+      : (navigator.language || 'pt').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'en';
+  } catch (e) { /* private window */ }
+
+  function say(key) { return WORDS[lang][key]; }
+  /** A position or a country under the language in force. */
+  function nameOf(code, ptName) {
+    if (lang === 'pt') { return ptName; }
+    return POS_EN[code] || COUNTRY_EN[code] || ptName;
+  }
+
   var LINES = [
     ['Baliza', [['GK', 'Guarda-redes']]],
     ['Defesa', [['CB', 'Defesa central'], ['LB', 'Lateral esquerdo'], ['RB', 'Lateral direito']]],
@@ -390,7 +544,7 @@
   var main = document.getElementById('pos');
   var none = document.createElement('option');
   none.value = '';
-  none.textContent = 'Escolhe uma posição';
+  none.textContent = say('pickPos');
   main.appendChild(none);
   LINES.forEach(function (line) {
     var group = document.createElement('optgroup');
@@ -424,12 +578,13 @@
     var search = document.getElementById(name + 'Search');
     var rows = [];
 
+    var groupHeads = [];
     groups.forEach(function (group) {
       var head = document.createElement('div');
       head.className = 'optline';
       head.textContent = group[0];
       panel.appendChild(head);
-      var heads = [];
+      groupHeads.push({ el: head, name: group[0] });
       group[1].forEach(function (pair) {
         var o = document.createElement('button');
         o.type = 'button';
@@ -456,14 +611,13 @@
           describe();
         });
         panel.appendChild(o);
-        rows.push({ el: o, head: head, name: pair[1] });
-        heads.push(o);
+        rows.push({ el: o, head: head, name: pair[1], code: pair[0] });
       });
     });
 
     var nothingFound = document.createElement('div');
     nothingFound.className = 'empty';
-    nothingFound.textContent = 'Nada com esse nome.';
+    nothingFound.textContent = say('nothing');
     nothingFound.hidden = true;
     panel.appendChild(nothingFound);
 
@@ -485,12 +639,12 @@
         if (r.el.getAttribute('aria-checked') === 'true' &&
             !r.el.disabled && seen.indexOf(r.el.value) < 0) {
           seen.push(r.el.value);
-          names.push(r.name);
+          names.push(nameOf(r.code, r.name));
         }
       });
-      label.textContent = names.length === 0 ? text.empty
+      label.textContent = names.length === 0 ? say(text.empty)
         : names.length <= 2 ? names.join(', ')
-        : names.length + ' ' + text.many;
+        : names.length + ' ' + say(text.many);
       btn.classList.toggle('chosen', names.length > 0);
     }
 
@@ -523,7 +677,7 @@
     var done = document.createElement('button');
     done.type = 'button';
     done.className = 'done-row';
-    done.textContent = 'Pronto';
+    done.textContent = say('ready');
     done.addEventListener('click', function () { open(false); btn.focus(); });
     panel.appendChild(done);
 
@@ -539,7 +693,11 @@
         var showing = 0;
         var live = [];
         rows.forEach(function (r) {
-          var hit = !q || plain(r.name).indexOf(q) >= 0;
+          /* Both names, whichever language is showing: a boy who types
+             "ukraine" finds Ucrânia, and one who types "espanha" finds
+             Spain. The list is the same list either way. */
+          var hit = !q || plain(r.name).indexOf(q) >= 0 ||
+            plain(nameOf(r.code, r.name)).indexOf(q) >= 0;
           r.el.hidden = !hit;
           if (hit) { showing++; live.push(r.head); }
         });
@@ -552,11 +710,14 @@
     }
 
     describe();
-    return { values: values, describe: describe, rows: rows };
+    return {
+      values: values, describe: describe, rows: rows,
+      heads: groupHeads, empty: nothingFound, done: done,
+    };
   }
 
-  var alt = makePicker('alt', LINES, { empty: 'Nenhuma', many: 'posições' });
-  var nat = makePicker('nat', COUNTRIES, { empty: 'Escolhe', many: 'nacionalidades' });
+  var alt = makePicker('alt', LINES, { empty: 'none', many: 'manyPos' });
+  var nat = makePicker('nat', COUNTRIES, { empty: 'choose', many: 'manyNat' });
 
   /* The date box opens on today, and a boy who taps it and closes it
      again leaves today's date sitting there - which is how two fichas
@@ -598,14 +759,14 @@
   function missing() {
     var cat = val('cat');
     var wanted = [
-      ['first', !val('first'), 'Falta o nome próprio.'],
-      ['last', !val('last'), 'Falta o apelido.'],
-      ['dob', !val('dob'), 'Falta a data de nascimento.'],
-      ['natBtn', nat.values().length === 0, 'Falta a nacionalidade.'],
-      ['foot', !val('foot'), 'Falta o pé preferido.'],
-      ['pos', !val('pos'), 'Falta a posição principal.'],
-      ['cat', !cat, 'Falta o escalão.'],
-      ['squad', cat === 'OUTRO' && !val('squad'), 'Escreve qual é o escalão.']
+      ['first', !val('first'), say('missFirst')],
+      ['last', !val('last'), say('missLast')],
+      ['dob', !val('dob'), say('missDob')],
+      ['natBtn', nat.values().length === 0, say('missNat')],
+      ['foot', !val('foot'), say('missFoot')],
+      ['pos', !val('pos'), say('missPos')],
+      ['cat', !cat, say('missCat')],
+      ['squad', cat === 'OUTRO' && !val('squad'), say('missSquad')]
     ];
     for (var i = 0; i < wanted.length; i++) {
       if (wanted[i][1]) { return { id: wanted[i][0], say: wanted[i][2] }; }
@@ -655,7 +816,7 @@
     var ready = !missing();
     send.setAttribute('aria-disabled', ready ? 'false' : 'true');
     if (ready && note.dataset.warned === 'yes') {
-      note.textContent = 'Pronto. Toca em enviar.';
+      note.textContent = say('noteReady');
       note.style.color = '';
       note.dataset.warned = '';
       Array.prototype.forEach.call(document.querySelectorAll('.wants'), function (el) {
@@ -664,13 +825,82 @@
     }
   }
 
+  /*
+   * Swap the language without touching a single answer.
+   *
+   * Everything carrying data-k is re-labelled from the dictionary, and the
+   * two built lists - positions and countries - are re-labelled from their
+   * codes. Nothing is rebuilt, so a half-filled form survives the switch,
+   * ticks and all.
+   */
+  function applyLang() {
+    document.documentElement.lang = lang === 'pt' ? 'pt' : 'en';
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-k]'), function (el) {
+      var word = WORDS[lang][el.getAttribute('data-k')];
+      if (word === undefined) { return; }
+      if (word.indexOf('<') >= 0) { el.innerHTML = word; } else { el.textContent = word; }
+    });
+
+    document.getElementById('natSearch').placeholder = say('search');
+
+    // the one position dropdown: its groups and its options
+    Array.prototype.forEach.call(main.querySelectorAll('optgroup'), function (g, i) {
+      g.label = lang === 'pt' ? LINES[i][0] : LINE_EN[LINES[i][0]];
+    });
+    Array.prototype.forEach.call(main.options, function (o) {
+      if (!o.value) { o.textContent = say('pickPos'); return; }
+      o.textContent = POS_EN[o.value] && lang === 'en' ? POS_EN[o.value] : ptPos(o.value);
+    });
+
+    // the two built lists
+    [alt, nat].forEach(function (picker) {
+      picker.rows.forEach(function (r) {
+        r.el.lastChild.textContent = nameOf(r.code, r.name);
+      });
+      picker.heads.forEach(function (h) {
+        h.el.textContent = lang === 'pt' ? h.name : (LINE_EN[h.name] || GROUP_EN[h.name] || h.name);
+      });
+      picker.empty.textContent = say('nothing');
+      picker.done.textContent = say('ready');
+      picker.describe();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('#lang button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-l') === lang ? 'true' : 'false');
+    });
+
+    if (note.dataset.warned !== 'yes') {
+      note.textContent = missing() ? say('noteDefault') : say('noteReady');
+    }
+    if (!send.disabled) { send.textContent = say('send'); }
+  }
+
+  /** The Portuguese name of a position, from the table it was built from. */
+  function ptPos(code) {
+    var found = code;
+    LINES.forEach(function (line) {
+      line[1].forEach(function (pair) { if (pair[0] === code) { found = pair[1]; } });
+    });
+    return found;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('#lang button'), function (b) {
+    b.addEventListener('click', function () {
+      lang = b.getAttribute('data-l');
+      try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* private window */ }
+      applyLang();
+    });
+  });
+
   document.getElementById('ficha').addEventListener('input', refresh);
   document.getElementById('ficha').addEventListener('change', refresh);
   refresh();
+  applyLang();
 
   function arrived() {
     document.getElementById('sentName').textContent =
-      val('first') + ' ' + val('last') + ', está feito.';
+      val('first') + ' ' + val('last') + say('sentName');
     document.getElementById('sent').hidden = false;
     document.getElementById('ficha').hidden = true;
     document.getElementById('bar').hidden = true;
@@ -686,7 +916,7 @@
 
     var dobBox = document.getElementById('dob');
     if (dobBox.validity && (dobBox.validity.rangeOverflow || dobBox.validity.rangeUnderflow)) {
-      complain('dob', 'Essa data de nascimento não pode estar certa.');
+      complain('dob', say('badDob'));
       return;
     }
 
@@ -696,9 +926,9 @@
 
     send.disabled = true;
     send.setAttribute('aria-disabled', 'true');
-    send.textContent = 'A enviar…';
+    send.textContent = say('sending');
     note.style.color = '';
-    note.textContent = 'Um momento.';
+    note.textContent = say('noteMoment');
 
     fetch(SEND_TO, {
       method: 'POST',
@@ -712,8 +942,8 @@
       // actually landed cannot enter him a second time.
       send.disabled = false;
       send.setAttribute('aria-disabled', 'false');
-      send.textContent = 'Tentar outra vez';
-      note.textContent = 'Não consegui enviar. Vê a internet e tenta outra vez.';
+      send.textContent = say('retry');
+      note.textContent = say('noteFail');
       note.style.color = 'var(--warn)';
     });
   });
